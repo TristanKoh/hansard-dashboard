@@ -1,0 +1,3 @@
+https://stackoverflow.com/questions/17975471/selenium-with-scrapy-for-dynamic-page?noredirect=1&lq=1
+https://stackoverflow.com/questions/29179519/submit-form-that-renders-dynamically-with-scrapy
+https://stackoverflow.com/questions/28420078/scrapy-with-selenium-for-a-webpage-requiring-authentication
