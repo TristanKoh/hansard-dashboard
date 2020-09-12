@@ -13,7 +13,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 # Set your login credentials and search parameters
 USERNAME = 'e0335719'
-PASSWORD = 'y/t6xzJWi5S@*qt'
+PASSWORD = ''
 SEARCH_TERM = "spandeck"
 
 driver = webdriver.Chrome(ChromeDriverManager().install())
