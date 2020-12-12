@@ -1,5 +1,7 @@
 import math
 
+import pandas as pd
+
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 from webdriver_manager.chrome import ChromeDriverManager
@@ -72,48 +74,77 @@ elif mp_name == True:
 driver.find_element_by_xpath('//*[@id="divmpscreen2"]/div[2]/div[3]/div/button[2]').click()
 driver.switch_to.window(driver.window_handles[1])
 
-
-
-
-
-# TODO: How to tag each body paragraph with the MPs name, given that not all of the paragraphs have the MPs name in it as string
-
 # Click first link on results page
 link = driver.find_element_by_xpath('//*[@id="searchResults"]/table/tbody[1]/tr[1]/td[2]/a')
 driver.execute_script('arguments[0].click();', link)
 driver.switch_to.window(driver.window_handles[2])
 
+
+# TODO: Abstract the structure of the scraping into a separate class
+"""
+We now need to tag the speaker's name to what they said: One column for the name and the other for the text
+
+We use two lists, one with the para_text, the other as MP tag that is the same length as para_text:
+In the end we will get a dataframe, one column with the MP tag, and the other with the text. 
+Each row corresponds with a paragraph, and each paragraph will be labelled with the MP's name.
+
+Implementation:
+Since para_text contains the text of the MP denoted with <strong>, we save the indices of those in para_text with <strong> 
+in a separate list tag_bold.
+
+We then initialise the MP tag list that is same length as para_text and loop over the this list
+If the index is in tag_bold, we know that this paragraph has a new speaker, and hence we write the speaker's name to the equivalent index
+in the names list. 
+
+We maintain a counter that increments by one everytime there is a match between the tag_bold and index, 
+because the bolded list does not have empty strings and is a different length from the para_text list.
+But the bolded list lists names in chronological order (ie in the order in which they speak), and hence we can follow the chronology of the
+speeches as well.
+
+We can then forward fill the empty strings with the most recent MPs name in the column.
+"""
+
+# Find all bolded elements and paragraphs
 bolded = driver.find_elements_by_tag_name('strong')
 para_text = driver.find_elements_by_tag_name('p')
 
-# Two lists, one with the para_text, the other as MP tag, same length as para_text
-# Use regex to find the name of the minister in between html <strong> MP_name <\strong>
-# For para in para_text, if there is anything in between <strong> <\strong>, assign to the relevant corresponding index in MP tag
-# After scraping, can forward fill all the blank indices.
-
-for bold in bolded:
-    print(bold.text)
-
+# Check the para_text list for the indices where there is <bold>: This means that there is a new speaker for that paragraph
 tag_bold = []
-string_test = [""]
-
 for index, para in enumerate(para_text):
     if "<strong>" in para.get_attribute('innerHTML'):
         tag_bold.append(index)
 
+
+# Maintain a counter for the index of bolded that starts at 1 (since the first bolded element is the name of the debat)
+# Loop over para_text, check if the index is in tag_bold.
+# If it is, insert the relevant name from the bolded list at the current index
+# If not, don't do anything
+
+names = [""] * len(para_text)
+bolded_counter = 1
+
 for index, para in enumerate(para_text):
-    if index not in tag_bold:
+    
+    if index in tag_bold:
+        names[index] = bolded[bolded_counter].text
+        bolded_counter += 1
+        print(bolded_counter)
+    
+    elif index not in tag_bold :
+        pass
 
 
-for row in string_test:
-    print(row)
-    print("-" * 40)
+# Export to csv
+# df_text_w_names = pd.DataFrame(
+#     {"names" : names,
+#     "text" : [para.text for para in para_text]
+#     }
+# )
+
+# df_text_w_names.to_csv(r"C:\Users\Tristan\Desktop\Projects\hansard-dashboard\hansard-dashboard-repo\Data\df_text_w_names.csv")
 
 
-
-
-
-
+# Continue scraping
 # Store current window handle
 search_page_handle = driver.current_window_handle
 
@@ -147,7 +178,6 @@ for index, pages in enumerate(range(1,(last_page_index + 1))):
             # Wait until title has loaded
             WebDriverWait(driver, 120).until(EC.presence_of_element_located((By.XPATH, '//*[@id="right1"]/div[2]/span/h1/strong')))
 
-            titles.append(driver.find_element_by_xpath('//*[@id="right1"]/div[2]/span/h1/strong').text)
 
             # Go back to results page
             driver.close()
@@ -176,47 +206,37 @@ for index, pages in enumerate(range(1,(last_page_index + 1))):
 
 
 
-
 # Dictionary structure to store scraped data - Search by MP
 # one dictionary for each link (running index)
 
-HANSARD_BY_MP = {
+# HANSARD_BY_MP = {
 
-    1 : {
-        "parliament_no" : [],
-        "session_no" : [],
-        "volume_no" : [],
-        "sitting_no" : []
-        "sitting_date" : [],
-        "section_name" : [],
-        "title" : [],
-        "MPs_speaking" : [],
-        "raw_text" : [],
-        "speaking_sequence" : []
-        }
+#     1 : {
+#         "parliament_no" : [],
+#         "session_no" : [],
+#         "volume_no" : [],
+#         "sitting_no" : []
+#         "sitting_date" : [],
+#         "section_name" : [],
+#         "title" : [],
+#         "MPs_speaking" : [],
+#         "raw_text" : [],
+#         "speaking_sequence" : []
+#         }
 
-    2 : {
-        "parliament_no" : [],
-        "session_no" : [],
-        "volume_no" : [],
-        "sitting_no" : []
-        "sitting_date" : [],
-        "section_name" : [],
-        "title" : [],
-        "MPs_speaking" : [],
-        "raw_text" : [],
-        "speaking_sequence" : []
-        }
+#     2 : {
+#         "parliament_no" : [],
+#         "session_no" : [],
+#         "volume_no" : [],
+#         "sitting_no" : []
+#         "sitting_date" : [],
+#         "section_name" : [],
+#         "title" : [],
+#         "MPs_speaking" : [],
+#         "raw_text" : [],
+#         "speaking_sequence" : []
+#         }
 
-    # etc
+#     # etc
 
-}
-
-
-test_dict = {}
-
-test_dict["cat1"] = 1
-test_dict["cat1"] = 2
-
-
-test_dict["cat1"]
+# }
